@@ -1,0 +1,87 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+#trigger: 
+# - none
+  #branches:
+    #include:
+    #- main
+    #- azure-pipelines-github
+pr:
+  - none
+  #branches:
+  #  include:
+  #  - master
+  #  - releases/*
+  #paths:
+  #  include:
+  #  - docs
+  #  exclude:
+  #  - docs/README.md
+
+resources:
+#  containers:
+#  - container: builder
+#    image: ubuntu:18.04
+- repo: self
+variables:
+  tag: '$(Build.BuildId)'
+  imageName: 'pipelines-gtest-docker'
+
+
+stages:
+- stage: Build
+  displayName: Build image
+
+  pool:
+    vmImage: ubuntu-latest
+
+  jobs:
+  - job: Build
+    displayName: Build Code
+    steps:
+    - task: Docker@2
+      displayName: Build an image
+      inputs:
+        repository: '$(imageName)'
+        command: build
+        Dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
+        tags: '$(tag)'
+
+    - bash: |
+        echo "Executing docker run command"
+        docker run --name my_con -i --rm -v $(Build.SourcesDirectory)/my_output:/con_output $(imageName):$(tag) \
+        cp /my_test.exe /con_output
+      displayName: Run docker inline in pipeline
+    - task: CopyFiles@2
+      displayName: Copy Artifact 
+      inputs:
+        contents: '**/?(*.exe|*.dll|*.pdb)'
+        targetFolder: $(Build.ArtifactStagingDirectory)
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact 
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)
+        artifactName: MyBuildOutputs
+
+#stage 2 
+- stage: Test
+  dependsOn: Build
+  displayName: Test stage
+  jobs:
+  - job: Test
+    displayName: Unit testing with gtest
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - download: current
+      artifact: MyBuildOutputs
+    - script: |
+        cd /$(Pipeline.Workspace)/MyBuildOutputs/my_output
+        chmod 777 my_test.exe
+        ./my_test.exe
+      displayName: Run exec file
+
