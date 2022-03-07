@@ -3,14 +3,12 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-#trigger: 
-# - none
+trigger: 
+ - none
   #branches:
     #include:
     #- main
     #- azure-pipelines-github
-on:
- - none
   #push:
   #  branches:
   #    - main
