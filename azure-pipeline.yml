@@ -9,17 +9,14 @@
     #include:
     #- main
     #- azure-pipelines-github
-pr:
-  - none
-  #branches:
-  #  include:
-  #  - master
-  #  - releases/*
-  #paths:
-  #  include:
-  #  - docs
-  #  exclude:
-  #  - docs/README.md
+on:
+ - none
+  #push:
+  #  branches:
+  #    - main
+  #pull_request:
+  #  branches: 
+  #    - main
 
 resources:
 #  containers:
